@@ -1,0 +1,1521 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<topology xmlns="http://www.cisco.com/VIRL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" schemaVersion="0.95" xsi:schemaLocation="http://www.cisco.com/VIRL https://raw.github.com/CiscoVIRL/schema/v0.95/virl.xsd">
+    <node name="xR1" type="SIMPLE" subtype="IOS XRv" location="283,204" vmImage="guest-IOS XRv-iosxrv-demo-6.5.1" ipv4="10.1.0.1">
+        <extensions>
+            <entry key="AutoNetkit.mgmt_ip" type="string"></entry>
+            <entry key="Auto-generate config" type="Boolean">false</entry>
+            <entry key="config" type="String">!! IOS XR Configuration 6.5.1
+!! Last configuration change at Thu Nov 15 13:25:48 2018 by cisco
+!
+hostname xR1
+service timestamps log datetime msec
+service timestamps debug datetime msec
+domain name virl.info
+domain lookup disable
+telnet vrf default ipv4 server max-servers 10
+telnet vrf Mgmt-intf ipv4 server max-servers 10
+vrf BLUE
+ description VRF BLUE 
+ address-family ipv4 unicast
+  import route-target
+   65001:100
+  !
+  export route-target
+   65001:100
+  !
+ !
+ address-family ipv6 unicast
+ !
+!
+! Configured on launch
+vrf Mgmt-intf
+ address-family ipv4 unicast
+ !
+ address-family ipv6 unicast
+ !
+!
+line template vty
+ timestamp
+ exec-timeout 720 0
+!
+line console
+ exec-timeout 0 0
+!
+line default
+ exec-timeout 720 0
+!
+vty-pool default 0 50
+ipv4 unnumbered mpls traffic-eng Loopback0
+control-plane
+ management-plane
+  inband
+   interface all
+    allow all
+   !
+  !
+ !
+!
+interface Loopback0
+ description Loopback 
+ ipv4 address 10.1.0.1 255.255.255.255
+!
+interface MgmtEth0/0/CPU0/0
+ description OOB Management 
+ ! Configured on launch
+ vrf Mgmt-intf
+ ipv4 address 10.255.0.91 255.255.0.0
+!
+interface GigabitEthernet0/0/0/0
+ description to xR2 
+ ipv4 address 10.10.12.1 255.255.255.0
+!
+interface GigabitEthernet0/0/0/1
+ description to xR5 
+ ipv4 address 10.10.15.1 255.255.255.0
+!
+interface GigabitEthernet0/0/0/2
+ description to R1 
+ vrf BLUE
+ ipv4 address 10.100.111.1 255.255.255.0
+!
+extcommunity-set opaque lowdelay
+  2
+end-set
+!
+extcommunity-set opaque besteffort
+  1
+end-set
+!
+route-policy color
+  if destination in (100.100.0.0/16 ge 16 le 32) then
+    set extcommunity color besteffort
+  endif
+  if destination in (100.200.0.0/16 ge 16 le 32) then
+    set extcommunity color lowdelay
+  endif
+  pass
+end-policy
+!
+route-policy pass-all
+  pass
+end-policy
+!
+router static
+ address-family ipv4 unicast
+  10.2.0.0/24 Null0
+ !
+!
+router isis 1
+ is-type level-2-only
+ net 49.0001.0000.0000.0001.00
+ address-family ipv4 unicast
+  metric-style wide
+  mpls traffic-eng level-2-only
+  mpls traffic-eng router-id Loopback0
+  segment-routing mpls
+ !
+ interface Loopback0
+  passive
+  address-family ipv4 unicast
+   prefix-sid absolute 16001
+  !
+ !
+ interface GigabitEthernet0/0/0/0
+  point-to-point
+  address-family ipv4 unicast
+  !
+ !
+ interface GigabitEthernet0/0/0/1
+  point-to-point
+  address-family ipv4 unicast
+   metric 50
+  !
+ !
+!
+router bgp 65001
+ bgp router-id 10.1.0.1
+ address-family ipv4 unicast
+ !
+ address-family vpnv4 unicast
+ !
+ address-family link-state link-state
+ !
+ neighbor 10.1.0.3
+  remote-as 65001
+  update-source Loopback0
+  address-family vpnv4 unicast
+   route-policy pass-all in
+   route-policy pass-all out
+   next-hop-self
+  !
+ !
+ vrf BLUE
+  rd 65001:100
+  address-family ipv4 unicast
+  !
+  neighbor 10.100.111.11
+   remote-as 65100
+   address-family ipv4 unicast
+    route-policy color in
+    route-policy pass-all out
+    as-override
+    next-hop-self
+   !
+  !
+ !
+!
+mpls oam
+!
+segment-routing
+!
+end
+
+</entry>
+        </extensions>
+        <interface id="0" name="GigabitEthernet0/0/0/0" ipv4="10.10.12.1" netPrefixLenV4="24"/>
+        <interface id="1" name="GigabitEthernet0/0/0/1" ipv4="10.12.15.1" netPrefixLenV4="24"/>
+        <interface id="2" name="GigabitEthernet0/0/0/2" ipv4="10.100.111.1" netPrefixLenV4="24"/>
+    </node>
+    <node name="xR2" type="SIMPLE" subtype="IOS XRv" location="278,135" vmImage="guest-IOS XRv-iosxrv-demo-6.5.1" ipv4="10.1.0.2">
+        <extensions>
+            <entry key="AutoNetkit.mgmt_ip" type="string"></entry>
+            <entry key="Auto-generate config" type="Boolean">false</entry>
+            <entry key="config" type="String">!! IOS XR Configuration 6.5.1
+!! Last configuration change at Sat Nov 10 08:52:09 2018 by CVAC
+!
+hostname xR2
+service timestamps log datetime msec
+service timestamps debug datetime msec
+domain name virl.info
+domain lookup disable
+telnet vrf default ipv4 server max-servers 10
+telnet vrf Mgmt-intf ipv4 server max-servers 10
+vrf Mgmt-intf
+ address-family ipv4 unicast
+ !
+ address-family ipv6 unicast
+ !
+!
+line template vty
+ timestamp
+ exec-timeout 720 0
+!
+line console
+ exec-timeout 0 0
+!
+line default
+ exec-timeout 720 0
+!
+vty-pool default 0 50
+ipv4 unnumbered mpls traffic-eng Loopback0
+control-plane
+ management-plane
+  inband
+   interface all
+    allow all
+   !
+  !
+ !
+!
+interface Loopback0
+ description Loopback 
+ ipv4 address 10.1.0.2 255.255.255.255
+!
+interface MgmtEth0/0/CPU0/0
+ description OOB Management 
+ ! Configured on launch
+ vrf Mgmt-intf
+ ipv4 address 10.255.0.92 255.255.0.0
+!
+interface GigabitEthernet0/0/0/0
+ description to xR1 
+ ipv4 address 10.10.12.2 255.255.255.0
+!
+interface GigabitEthernet0/0/0/1
+ description to xR3 
+ ipv4 address 10.10.23.2 255.255.255.0
+!
+router isis 1
+ is-type level-2-only
+ net 49.0001.0000.0000.0002.00
+ address-family ipv4 unicast
+  metric-style wide
+  mpls traffic-eng level-2-only
+  mpls traffic-eng router-id Loopback0
+  segment-routing mpls
+ !
+ interface Loopback0
+  passive
+  address-family ipv4 unicast
+   prefix-sid absolute 16002
+  !
+ !
+ interface GigabitEthernet0/0/0/0
+  point-to-point
+  address-family ipv4 unicast
+  !
+ !
+ interface GigabitEthernet0/0/0/1
+  point-to-point
+  address-family ipv4 unicast
+  !
+ !
+!
+mpls oam
+!
+mpls traffic-eng
+!
+segment-routing
+!
+end
+
+</entry>
+        </extensions>
+        <interface id="0" name="GigabitEthernet0/0/0/0" ipv4="10.10.12.1" netPrefixLenV4="24"/>
+        <interface id="1" name="GigabitEthernet0/0/0/1" ipv4="10.10.23.2" netPrefixLenV4="24"/>
+    </node>
+    <node name="xR3" type="SIMPLE" subtype="IOS XRv" location="379,132" vmImage="guest-IOS XRv-iosxrv-demo-6.5.1" ipv4="10.1.0.3">
+        <extensions>
+            <entry key="AutoNetkit.mgmt_ip" type="string"></entry>
+            <entry key="config" type="String">!! IOS XR Configuration 6.5.1
+!! Last configuration change at Thu Nov 15 13:19:17 2018 by cisco
+!
+hostname xR3
+service timestamps log datetime msec
+service timestamps debug datetime msec
+domain name virl.info
+domain lookup disable
+telnet vrf default ipv4 server max-servers 10
+telnet vrf Mgmt-intf ipv4 server max-servers 10
+vrf Mgmt-intf
+ address-family ipv4 unicast
+ !
+ address-family ipv6 unicast
+ !
+!
+line template vty
+ timestamp
+ exec-timeout 720 0
+!
+line console
+ exec-timeout 0 0
+!
+line default
+ exec-timeout 720 0
+!
+vty-pool default 0 50
+ipv4 unnumbered mpls traffic-eng Loopback0
+control-plane
+ management-plane
+  inband
+   interface all
+    allow all
+   !
+  !
+ !
+!
+interface Loopback0
+ description Loopback 
+ ipv4 address 10.1.0.3 255.255.255.255
+!
+interface MgmtEth0/0/CPU0/0
+ description OOB Management 
+ ! Configured on launch
+ vrf Mgmt-intf
+ ipv4 address 10.255.0.93 255.255.0.0
+!
+interface GigabitEthernet0/0/0/0
+ description to xR2 
+ ipv4 address 10.10.23.3 255.255.255.0
+!
+interface GigabitEthernet0/0/0/1
+ description to xR5 
+ ipv4 address 10.10.35.3 255.255.255.0
+!
+interface GigabitEthernet0/0/0/2
+ description to xR7 (xTC) 
+ ipv4 address 10.99.37.3 255.255.255.0
+!
+interface GigabitEthernet0/0/0/3
+ description to xR4 (in AS 65002) 
+ ipv4 address 10.12.34.3 255.255.255.0
+!
+prefix-set XTCAddr
+  10.99.0.7/32
+end-set
+!
+route-policy Only_XTC
+  if destination in XTCAddr then
+    pass
+  else
+    drop
+  endif
+end-policy
+!
+route-policy pass-all
+  pass
+end-policy
+!
+router static
+ address-family ipv4 unicast
+  10.2.0.0/24 Null0
+  10.99.0.7/32 10.99.37.7
+ !
+!
+router isis 1
+ is-type level-2-only
+ net 49.0001.0000.0000.0003.00
+ distribute link-state instance-id 65001
+ address-family ipv4 unicast
+  metric-style wide
+  mpls traffic-eng level-2-only
+  mpls traffic-eng router-id Loopback0
+  redistribute static route-policy Only_XTC
+  segment-routing mpls
+ !
+ interface Loopback0
+  passive
+  address-family ipv4 unicast
+   prefix-sid absolute 16003
+  !
+ !
+ interface GigabitEthernet0/0/0/0
+  point-to-point
+  address-family ipv4 unicast
+  !
+ !
+ interface GigabitEthernet0/0/0/1
+  point-to-point
+  address-family ipv4 unicast
+  !
+ !
+!
+router bgp 65001
+ bgp router-id 10.1.0.3
+ address-family ipv4 unicast
+ !
+ address-family vpnv4 unicast
+ !
+ address-family link-state link-state
+ !
+ neighbor 10.1.0.1
+  remote-as 65001
+  update-source Loopback0
+  address-family vpnv4 unicast
+   route-policy pass-all in
+   route-reflector-client
+   route-policy pass-all out
+  !
+ !
+ neighbor 10.99.0.7
+  remote-as 65099
+  ebgp-multihop 5
+  update-source Loopback0
+  address-family link-state link-state
+   route-policy pass-all in
+   route-policy pass-all out
+  !
+ !
+ neighbor 10.12.34.4
+  remote-as 65002
+  egress-engineering
+  address-family vpnv4 unicast
+   route-policy pass-all in
+   route-policy pass-all out
+   next-hop-unchanged
+  !
+ !
+!
+mpls oam
+!
+mpls static
+ interface GigabitEthernet0/0/0/3
+!
+segment-routing
+!
+end
+
+</entry>
+        </extensions>
+        <interface id="0" name="GigabitEthernet0/0/0/0" ipv4="10.10.23.3" netPrefixLenV4="24"/>
+        <interface id="1" name="GigabitEthernet0/0/0/1" ipv4="10.10.35.3" netPrefixLenV4="24"/>
+        <interface id="2" name="GigabitEthernet0/0/0/2" ipv4="10.99.37.3" netPrefixLenV4="24"/>
+        <interface id="3" name="GigabitEthernet0/0/0/3" ipv4="10.12.34.3" netPrefixLenV4="24"/>
+    </node>
+    <node name="xR4" type="SIMPLE" subtype="IOS XRv" location="463,132" vmImage="guest-IOS XRv-iosxrv-demo-6.5.1" ipv4="10.2.0.4">
+        <extensions>
+            <entry key="AutoNetkit.mgmt_ip" type="string"></entry>
+            <entry key="config" type="String">!! IOS XR Configuration 6.5.1
+!! Last configuration change at Tue Nov 13 07:33:19 2018 by cisco
+!
+hostname xR4
+service timestamps log datetime msec
+service timestamps debug datetime msec
+domain name virl.info
+domain lookup disable
+telnet vrf default ipv4 server max-servers 10
+telnet vrf Mgmt-intf ipv4 server max-servers 10
+vrf Mgmt-intf
+ address-family ipv4 unicast
+ !
+ address-family ipv6 unicast
+ !
+!
+line template vty
+ timestamp
+ exec-timeout 720 0
+!
+line console
+ exec-timeout 0 0
+!
+line default
+ exec-timeout 720 0
+!
+vty-pool default 0 50
+ipv4 unnumbered mpls traffic-eng Loopback0
+control-plane
+ management-plane
+  inband
+   interface all
+    allow all
+   !
+  !
+ !
+!
+interface Loopback0
+ description Loopback 
+ ipv4 address 10.2.0.4 255.255.255.255
+!
+interface MgmtEth0/0/CPU0/0
+ description OOB Management 
+ ! Configured on launch
+ vrf Mgmt-intf
+ ipv4 address 10.255.0.94 255.255.0.0
+!
+interface GigabitEthernet0/0/0/0
+ description to xR7 (xTC) 
+ ipv4 address 10.99.47.4 255.255.255.0
+!
+interface GigabitEthernet0/0/0/1
+ description to xR8 
+ ipv4 address 10.10.48.4 255.255.255.0
+!
+interface GigabitEthernet0/0/0/2
+ description to xR6 
+ ipv4 address 10.10.46.4 255.255.255.0
+!
+interface GigabitEthernet0/0/0/3
+ description to xR3 (in AS65001) 
+ ipv4 address 10.12.34.4 255.255.255.0
+!
+prefix-set XTCAddr
+  10.99.0.7/32
+end-set
+!
+route-policy Only_XTC
+  if destination in XTCAddr then
+    pass
+  else
+    drop
+  endif
+end-policy
+!
+route-policy pass-all
+  pass
+end-policy
+!
+router static
+ address-family ipv4 unicast
+  10.1.0.0/24 Null0
+  10.99.0.7/32 10.99.47.7
+ !
+!
+router isis 2
+ is-type level-2-only
+ net 49.0002.0000.0000.0004.00
+ distribute link-state instance-id 65012
+ address-family ipv4 unicast
+  metric-style wide
+  mpls traffic-eng level-2-only
+  mpls traffic-eng router-id Loopback0
+  redistribute static route-policy Only_XTC
+  segment-routing mpls
+ !
+ interface Loopback0
+  passive
+  address-family ipv4 unicast
+   prefix-sid absolute 16004
+  !
+ !
+ interface GigabitEthernet0/0/0/1
+  point-to-point
+  address-family ipv4 unicast
+  !
+ !
+ interface GigabitEthernet0/0/0/2
+  point-to-point
+  address-family ipv4 unicast
+  !
+ !
+!
+router bgp 65002
+ address-family ipv4 unicast
+ !
+ address-family vpnv4 unicast
+ !
+ address-family link-state link-state
+ !
+ neighbor 10.2.0.8
+  remote-as 65002
+  update-source Loopback0
+  address-family vpnv4 unicast
+   route-policy pass-all in
+   route-reflector-client
+   route-policy pass-all out
+  !
+ !
+ neighbor 10.99.0.7
+  remote-as 65099
+  ebgp-multihop 5
+  update-source Loopback0
+  address-family link-state link-state
+   route-policy pass-all in
+   route-policy pass-all out
+  !
+ !
+ neighbor 10.12.34.3
+  remote-as 65001
+  egress-engineering
+  address-family vpnv4 unicast
+   route-policy pass-all in
+   route-policy pass-all out
+   next-hop-unchanged
+  !
+ !
+!
+mpls oam
+!
+mpls traffic-eng
+!
+mpls static
+ interface GigabitEthernet0/0/0/3
+!
+segment-routing
+!
+end
+
+</entry>
+        </extensions>
+        <interface id="0" name="GigabitEthernet0/0/0/0" ipv4="10.99.47.4" netPrefixLenV4="24"/>
+        <interface id="1" name="GigabitEthernet0/0/0/1" ipv4="10.10.48.4" netPrefixLenV4="24"/>
+        <interface id="2" name="GigabitEthernet0/0/0/2" ipv4="10.10.46.4" netPrefixLenV4="24"/>
+        <interface id="3" name="GigabitEthernet0/0/0/3" ipv4="10.12.34.4" netPrefixLenV4="24"/>
+    </node>
+    <node name="xR5" type="SIMPLE" subtype="IOS XRv" location="379,204" vmImage="guest-IOS XRv-iosxrv-demo-6.5.1" ipv4="10.1.0.5">
+        <extensions>
+            <entry key="AutoNetkit.mgmt_ip" type="string"></entry>
+            <entry key="config" type="String">!! IOS XR Configuration 6.5.1
+!! Last configuration change at Thu Nov 15 13:15:20 2018 by cisco
+!
+hostname xR5
+service timestamps log datetime msec
+service timestamps debug datetime msec
+domain name virl.info
+domain lookup disable
+telnet vrf default ipv4 server max-servers 10
+telnet vrf Mgmt-intf ipv4 server max-servers 10
+vrf Mgmt-intf
+ address-family ipv4 unicast
+ !
+ address-family ipv6 unicast
+ !
+!
+line template vty
+ timestamp
+ exec-timeout 720 0
+!
+line console
+ exec-timeout 0 0
+!
+line default
+ exec-timeout 720 0
+!
+vty-pool default 0 50
+control-plane
+ management-plane
+  inband
+   interface all
+    allow all
+   !
+  !
+ !
+!
+interface Loopback0
+ description Loopback 
+ ipv4 address 10.1.0.5 255.255.255.255
+!
+interface MgmtEth0/0/CPU0/0
+ description OOB Management 
+ ! Configured on launch
+ vrf Mgmt-intf
+ ipv4 address 10.255.0.95 255.255.0.0
+!
+interface GigabitEthernet0/0/0/0
+ description to xR1 
+ ipv4 address 10.10.15.5 255.255.255.0
+!
+interface GigabitEthernet0/0/0/1
+ description to xR3 
+ ipv4 address 10.10.35.5 255.255.255.0
+!
+interface GigabitEthernet0/0/0/2
+ description to xR6 (in AS 65002) 
+ ipv4 address 10.12.56.5 255.255.255.0
+!
+route-policy pass-all
+  pass
+end-policy
+!
+router isis 1
+ is-type level-2-only
+ net 49.0001.0000.0000.0005.00
+ address-family ipv4 unicast
+  metric-style wide
+  mpls traffic-eng level-2-only
+  mpls traffic-eng router-id Loopback0
+  segment-routing mpls
+ !
+ interface Loopback0
+  passive
+  address-family ipv4 unicast
+   prefix-sid absolute 16005
+  !
+ !
+ interface GigabitEthernet0/0/0/0
+  point-to-point
+  address-family ipv4 unicast
+   metric 50
+  !
+ !
+ interface GigabitEthernet0/0/0/1
+  point-to-point
+  address-family ipv4 unicast
+  !
+ !
+!
+router bgp 65001
+ bgp router-id 10.1.0.5
+ address-family ipv4 unicast
+  network 10.1.0.5/32
+ !
+ address-family vpnv4 unicast
+ !
+ address-family link-state link-state
+ !
+ neighbor 10.99.0.7
+  remote-as 65099
+  ebgp-multihop 5
+  update-source Loopback0
+  address-family link-state link-state
+   route-policy pass-all in
+   route-policy pass-all out
+  !
+ !
+ neighbor 10.12.56.6
+  remote-as 65002
+  egress-engineering
+  address-family ipv4 unicast
+   route-policy pass-all in
+   route-policy pass-all out
+  !
+  address-family vpnv4 unicast
+   route-policy pass-all in
+   route-policy pass-all out
+   next-hop-unchanged
+  !
+ !
+!
+mpls oam
+!
+mpls static
+ interface GigabitEthernet0/0/0/2
+!
+segment-routing
+!
+end
+
+</entry>
+        </extensions>
+        <interface id="0" name="GigabitEthernet0/0/0/0" ipv4="10.10.15.5" netPrefixLenV4="24"/>
+        <interface id="1" name="GigabitEthernet0/0/0/1" ipv4="10.10.35.5" netPrefixLenV4="24"/>
+        <interface id="2" name="GigabitEthernet0/0/0/2" ipv4="10.12.56.5" netPrefixLenV4="24"/>
+    </node>
+    <node name="xR6" type="SIMPLE" subtype="IOS XRv" location="463,204" vmImage="guest-IOS XRv-iosxrv-demo-6.5.1" ipv4="10.2.0.6">
+        <extensions>
+            <entry key="AutoNetkit.mgmt_ip" type="string"></entry>
+            <entry key="config" type="String">!! IOS XR Configuration 6.5.1
+!! Last configuration change at Thu Nov 15 09:48:59 2018 by cisco
+!
+hostname xR6
+service timestamps log datetime msec
+service timestamps debug datetime msec
+domain name virl.info
+domain lookup disable
+telnet vrf default ipv4 server max-servers 10
+telnet vrf Mgmt-intf ipv4 server max-servers 10
+vrf Mgmt-intf
+ address-family ipv4 unicast
+ !
+ address-family ipv6 unicast
+ !
+!
+line template vty
+ timestamp
+ exec-timeout 720 0
+!
+line console
+ exec-timeout 0 0
+!
+line default
+ exec-timeout 720 0
+!
+vty-pool default 0 50
+control-plane
+ management-plane
+  inband
+   interface all
+    allow all
+   !
+  !
+ !
+!
+interface Loopback0
+ description Loopback 
+ ipv4 address 10.2.0.6 255.255.255.255
+!
+interface MgmtEth0/0/CPU0/0
+ description OOB Management 
+ ! Configured on launch
+ vrf Mgmt-intf
+ ipv4 address 10.255.0.96 255.255.0.0
+!
+interface GigabitEthernet0/0/0/0
+ description to xR8 
+ ipv4 address 10.10.68.6 255.255.255.0
+!
+interface GigabitEthernet0/0/0/1
+ description to xR4 
+ ipv4 address 10.10.46.6 255.255.255.0
+!
+interface GigabitEthernet0/0/0/2
+ description to xR5 (in AS65001) 
+ ipv4 address 10.12.56.6 255.255.255.0
+!
+route-policy pass-all
+  pass
+end-policy
+!
+router isis 2
+ is-type level-2-only
+ net 49.0002.0000.0000.0006.00
+ address-family ipv4 unicast
+  metric-style wide
+  mpls traffic-eng level-2-only
+  mpls traffic-eng router-id Loopback0
+  segment-routing mpls
+ !
+ interface Loopback0
+  passive
+  address-family ipv4 unicast
+   prefix-sid absolute 16006
+  !
+ !
+ interface GigabitEthernet0/0/0/0
+  point-to-point
+  address-family ipv4 unicast
+   metric 50
+  !
+ !
+ interface GigabitEthernet0/0/0/1
+  point-to-point
+  address-family ipv4 unicast
+  !
+ !
+!
+router bgp 65002
+ bgp router-id 10.2.0.6
+ address-family ipv4 unicast
+  network 10.2.0.6/32
+ !
+ address-family vpnv4 unicast
+ !
+ neighbor 10.12.56.5
+  remote-as 65001
+  egress-engineering
+  address-family ipv4 unicast
+   route-policy pass-all in
+   route-policy pass-all out
+  !
+  address-family vpnv4 unicast
+   route-policy pass-all in
+   route-policy pass-all out
+  !
+ !
+!
+mpls traffic-eng
+!
+mpls static
+ interface GigabitEthernet0/0/0/2
+!
+end
+
+</entry>
+        </extensions>
+        <interface id="0" name="GigabitEthernet0/0/0/0" ipv4="10.10.68.6" netPrefixLenV4="24"/>
+        <interface id="1" name="GigabitEthernet0/0/0/1" ipv4="10.10.46.6" netPrefixLenV4="24"/>
+        <interface id="2" name="GigabitEthernet0/0/0/2" ipv4="10.12.56.6" netPrefixLenV4="24"/>
+    </node>
+    <node name="xR7" type="SIMPLE" subtype="IOS XRv" location="424,75" vmImage="guest-IOS XRv-iosxrv-demo-6.5.1" ipv4="10.1.0.7">
+        <extensions>
+            <entry key="AutoNetkit.mgmt_ip" type="string"></entry>
+            <entry key="config" type="String">!! IOS XR Configuration 6.5.1
+!! Last configuration change at Thu Nov 15 13:01:01 2018 by cisco
+!
+hostname xR7
+service timestamps log datetime msec
+service timestamps debug datetime msec
+domain name virl.info
+domain lookup disable
+telnet vrf default ipv4 server max-servers 10
+telnet vrf Mgmt-intf ipv4 server max-servers 10
+pce
+ address ipv4 10.99.0.7
+!
+vrf Mgmt-intf
+ address-family ipv4 unicast
+ !
+ address-family ipv6 unicast
+ !
+!
+line template vty
+ timestamp
+ exec-timeout 720 0
+!
+line console
+ exec-timeout 0 0
+!
+line default
+ exec-timeout 720 0
+!
+vty-pool default 0 50
+control-plane
+ management-plane
+  inband
+   interface all
+    allow all
+   !
+  !
+ !
+!
+interface Loopback0
+ description Loopback 
+ ipv4 address 10.99.0.7 255.255.255.255
+!
+interface MgmtEth0/0/CPU0/0
+ description OOB Management 
+ ! Configured on launch
+ vrf Mgmt-intf
+ ipv4 address 10.255.0.97 255.255.0.0
+!
+interface GigabitEthernet0/0/0/0
+ description to xR3 (in AS65001) 
+ ipv4 address 10.99.37.7 255.255.255.0
+!
+interface GigabitEthernet0/0/0/1
+ description to xR4 (in AS65002) 
+ ipv4 address 10.99.47.7 255.255.255.0
+!
+route-policy pass-all
+  pass
+end-policy
+!
+router static
+ address-family ipv4 unicast
+  10.1.0.0/24 10.99.37.3
+  10.2.0.0/24 10.99.47.4
+ !
+!
+router bgp 65099
+ bgp router-id 10.99.0.7
+ address-family link-state link-state
+ !
+ neighbor-group BGP-LS1
+  remote-as 65001
+  ebgp-multihop 5
+  update-source Loopback0
+  address-family link-state link-state
+   route-policy pass-all in
+   route-policy pass-all out
+   next-hop-unchanged
+  !
+ !
+ neighbor-group BGP-LS2
+  remote-as 65002
+  ebgp-multihop 5
+  update-source Loopback0
+  address-family link-state link-state
+   route-policy pass-all in
+   route-policy pass-all out
+   next-hop-unchanged
+  !
+ !
+ neighbor 10.1.0.3
+  use neighbor-group BGP-LS1
+ !
+ neighbor 10.1.0.5
+  use neighbor-group BGP-LS1
+ !
+ neighbor 10.2.0.4
+  use neighbor-group BGP-LS2
+ !
+!
+end
+
+</entry>
+        </extensions>
+        <interface id="0" name="GigabitEthernet0/0/0/0" ipv4="10.99.37.7" netPrefixLenV4="24"/>
+        <interface id="1" name="GigabitEthernet0/0/0/1" ipv4="10.99.47.7" netPrefixLenV4="24"/>
+    </node>
+    <node name="xR8" type="SIMPLE" subtype="IOS XRv" location="559,204" vmImage="guest-IOS XRv-iosxrv-demo-6.5.1" ipv4="10.2.0.8">
+        <extensions>
+            <entry key="AutoNetkit.mgmt_ip" type="string"></entry>
+            <entry key="config" type="String">!! IOS XR Configuration 6.5.1
+!! Last configuration change at Thu Nov 15 13:26:13 2018 by cisco
+!
+hostname xR8
+service timestamps log datetime msec
+service timestamps debug datetime msec
+domain name virl.info
+domain lookup disable
+telnet vrf default ipv4 server max-servers 10
+telnet vrf Mgmt-intf ipv4 server max-servers 10
+vrf BLUE
+ description VRF BLUE 
+ address-family ipv4 unicast
+  import route-target
+   65001:100
+  !
+  export route-target
+   65001:100
+  !
+ !
+ address-family ipv6 unicast
+ !
+!
+! Configured on launch
+vrf Mgmt-intf
+ address-family ipv4 unicast
+ !
+ address-family ipv6 unicast
+ !
+!
+line template vty
+ timestamp
+ exec-timeout 720 0
+!
+line console
+ exec-timeout 0 0
+!
+line default
+ exec-timeout 720 0
+!
+vty-pool default 0 50
+ipv4 unnumbered mpls traffic-eng Loopback0
+control-plane
+ management-plane
+  inband
+   interface all
+    allow all
+   !
+  !
+ !
+!
+interface Loopback0
+ description Loopback 
+ ipv4 address 10.2.0.8 255.255.255.255
+!
+interface MgmtEth0/0/CPU0/0
+ description OOB Management 
+ ! Configured on launch
+ vrf Mgmt-intf
+ ipv4 address 10.255.0.98 255.255.0.0
+!
+interface GigabitEthernet0/0/0/0
+ description to xR4 
+ ipv4 address 10.10.48.8 255.255.255.0
+!
+interface GigabitEthernet0/0/0/1
+ description to xR6 
+ ipv4 address 10.10.68.8 255.255.255.0
+!
+interface GigabitEthernet0/0/0/2
+ description to R2 
+ vrf BLUE
+ ipv4 address 10.100.128.8 255.255.255.0
+!
+extcommunity-set opaque lowdelay
+  2
+end-set
+!
+extcommunity-set opaque besteffort
+  1
+end-set
+!
+route-policy color
+  if destination in (100.100.0.0/16 ge 16 le 32) then
+    set extcommunity color besteffort
+  endif
+  if destination in (100.200.0.0/16 ge 16 le 32) then
+    set extcommunity color lowdelay
+  endif
+  pass
+end-policy
+!
+route-policy pass-all
+  pass
+end-policy
+!
+router static
+ address-family ipv4 unicast
+  10.1.0.0/24 Null0
+ !
+!
+router isis 2
+ is-type level-2-only
+ net 49.0002.0000.0000.0008.00
+ distribute link-state instance-id 65002
+ address-family ipv4 unicast
+  metric-style wide
+  mpls traffic-eng level-2-only
+  mpls traffic-eng router-id Loopback0
+  segment-routing mpls
+ !
+ interface Loopback0
+  passive
+  address-family ipv4 unicast
+   prefix-sid absolute 16008
+  !
+ !
+ interface GigabitEthernet0/0/0/0
+  point-to-point
+  address-family ipv4 unicast
+  !
+ !
+ interface GigabitEthernet0/0/0/1
+  point-to-point
+  address-family ipv4 unicast
+   metric 50
+  !
+ !
+!
+router bgp 65002
+ bgp router-id 10.2.0.8
+ address-family ipv4 unicast
+ !
+ address-family vpnv4 unicast
+ !
+ address-family link-state link-state
+ !
+ address-family ipv4 sr-policy
+ !
+ neighbor 10.2.0.4
+  remote-as 65002
+  update-source Loopback0
+  address-family vpnv4 unicast
+   route-policy pass-all in
+   route-policy pass-all out
+   next-hop-self
+  !
+  address-family ipv4 sr-policy
+  !
+ !
+ vrf BLUE
+  rd 65001:100
+  address-family ipv4 unicast
+  !
+  neighbor 10.100.128.12
+   remote-as 65100
+   address-family ipv4 unicast
+    route-policy color in
+    route-policy pass-all out
+    as-override
+    next-hop-self
+   !
+  !
+ !
+!
+mpls oam
+!
+segment-routing
+!
+end
+
+</entry>
+        </extensions>
+        <interface id="0" name="GigabitEthernet0/0/0/0" ipv4="10.10.48.8" netPrefixLenV4="24"/>
+        <interface id="1" name="GigabitEthernet0/0/0/1" ipv4="10.10.68.8" netPrefixLenV4="24"/>
+        <interface id="2" name="GigabitEthernet0/0/0/2" ipv4="10.100.128.8" netPrefixLenV4="24"/>
+    </node>
+    <node name="R1" type="SIMPLE" subtype="IOSv" location="196,209" ipv4="100.100.1.1">
+        <extensions>
+            <entry key="AutoNetkit.mgmt_ip" type="string"></entry>
+            <entry key="config" type="String">!
+! Last configuration change at 08:52:38 UTC Sat Nov 10 2018
+!
+version 15.6
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no service password-encryption
+!
+hostname R1
+!
+boot-start-marker
+boot-end-marker
+!
+!
+vrf definition Mgmt-intf
+ !
+ address-family ipv4
+ exit-address-family
+ !
+ address-family ipv6
+ exit-address-family
+!
+enable password cisco
+!
+no aaa new-model
+!
+!
+!
+mmi polling-interval 60
+no mmi auto-configure
+no mmi pvc
+mmi snmp-timeout 180
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+no ip domain lookup
+ip domain name virl.info
+ip cef
+ipv6 unicast-routing
+ipv6 cef
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+username cisco privilege 15 secret 5 $1$5HDP$C.L8eY/a3JHLA/aP1x/XZ.
+!
+redundancy
+!
+no cdp run
+!
+! 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+interface Loopback0
+ description Loopback 0 (100.100)
+ ip address 100.100.1.1 255.255.255.0
+!
+interface Loopback1
+ description Loopback 1 (100.200)
+ ip address 100.200.1.1 255.255.255.0
+!
+interface GigabitEthernet0/0
+ description OOB Management
+ vrf forwarding Mgmt-intf
+ ip address 10.255.0.89 255.255.0.0
+ duplex full
+ speed auto
+ media-type rj45
+!
+interface GigabitEthernet0/1
+ description to xR1
+ ip address 10.100.111.11 255.255.255.0
+ ip ospf cost 1
+ duplex full
+ speed auto
+ media-type rj45
+!
+router bgp 65100
+ bgp log-neighbor-changes
+ neighbor 10.100.111.1 remote-as 65001
+ !
+ address-family ipv4
+  network 100.100.1.0 mask 255.255.255.0
+  network 100.200.1.0 mask 255.255.255.0
+  neighbor 10.100.111.1 activate
+ exit-address-family
+!
+ip forward-protocol nd
+!
+!
+no ip http server
+no ip http secure-server
+ip ssh server algorithm encryption aes128-ctr aes192-ctr aes256-ctr
+ip ssh server algorithm authentication password
+ip ssh client algorithm encryption aes128-ctr aes192-ctr aes256-ctr
+!
+ipv6 ioam timestamp
+!
+!
+!
+control-plane
+!
+banner exec `
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************`
+banner incoming `
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************`
+banner login `
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************`
+!
+line con 0
+ password cisco
+line aux 0
+line vty 0 4
+ exec-timeout 720 0
+ password cisco
+ login local
+ transport input telnet ssh
+!
+no scheduler allocate
+!
+end
+
+</entry>
+        </extensions>
+        <interface id="0" name="GigabitEthernet0/1" ipv4="10.100.111.11" netPrefixLenV4="24"/>
+    </node>
+    <node name="R2" type="SIMPLE" subtype="IOSv" location="640,209" ipv4="100.100.2.2">
+        <extensions>
+            <entry key="AutoNetkit.mgmt_ip" type="string"></entry>
+            <entry key="config" type="String">!
+! Last configuration change at 08:47:57 UTC Sat Nov 10 2018
+!
+version 15.6
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no service password-encryption
+!
+hostname R2
+!
+boot-start-marker
+boot-end-marker
+!
+!
+vrf definition Mgmt-intf
+ !
+ address-family ipv4
+ exit-address-family
+ !
+ address-family ipv6
+ exit-address-family
+!
+enable password cisco
+!
+no aaa new-model
+!
+!
+!
+mmi polling-interval 60
+no mmi auto-configure
+no mmi pvc
+mmi snmp-timeout 180
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+no ip domain lookup
+ip domain name virl.info
+ip cef
+ipv6 unicast-routing
+ipv6 cef
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+username cisco privilege 15 secret 5 $1$MDU4$nR/sGPha6apA.znXwGl2U0
+!
+redundancy
+!
+no cdp run
+!
+! 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+interface Loopback0
+ description Loopback 0 (100.100)
+ ip address 100.100.2.2 255.255.255.0
+!
+interface Loopback1
+ description Loopback 1 (100.200)
+ ip address 100.200.2.2 255.255.255.0
+!
+interface GigabitEthernet0/0
+ description OOB Management
+ vrf forwarding Mgmt-intf
+ ip address 10.255.0.90 255.255.0.0
+ duplex full
+ speed auto
+ media-type rj45
+!
+interface GigabitEthernet0/1
+ description to iosxrv-1
+ ip address 10.100.128.12 255.255.255.0
+ ip ospf cost 1
+ duplex full
+ speed auto
+ media-type rj45
+!
+router bgp 65100
+ bgp log-neighbor-changes
+ neighbor 10.100.128.8 remote-as 65002
+ !
+ address-family ipv4
+  network 100.100.2.0 mask 255.255.255.0
+  network 100.200.2.0 mask 255.255.255.0
+  neighbor 10.100.128.8 activate
+ exit-address-family
+!
+ip forward-protocol nd
+!
+!
+no ip http server
+no ip http secure-server
+ip ssh server algorithm encryption aes128-ctr aes192-ctr aes256-ctr
+ip ssh server algorithm authentication password
+ip ssh client algorithm encryption aes128-ctr aes192-ctr aes256-ctr
+!
+ipv6 ioam timestamp
+!
+!
+!
+control-plane
+!
+banner exec `
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************`
+banner incoming `
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************`
+banner login `
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************`
+!
+line con 0
+ password cisco
+line aux 0
+line vty 0 4
+ exec-timeout 720 0
+ password cisco
+ login local
+ transport input telnet ssh
+!
+no scheduler allocate
+!
+end
+
+</entry>
+        </extensions>
+        <interface id="0" name="GigabitEthernet0/1" ipv4="10.100.128.12" netPrefixLenV4="24"/>
+    </node>
+    <annotations/>
+    <connection dst="/virl:topology/virl:node[1]/virl:interface[1]" src="/virl:topology/virl:node[2]/virl:interface[1]"/>
+    <connection dst="/virl:topology/virl:node[5]/virl:interface[1]" src="/virl:topology/virl:node[1]/virl:interface[2]"/>
+    <connection dst="/virl:topology/virl:node[3]/virl:interface[1]" src="/virl:topology/virl:node[2]/virl:interface[2]"/>
+    <connection dst="/virl:topology/virl:node[5]/virl:interface[2]" src="/virl:topology/virl:node[3]/virl:interface[2]"/>
+    <connection dst="/virl:topology/virl:node[7]/virl:interface[1]" src="/virl:topology/virl:node[3]/virl:interface[3]"/>
+    <connection dst="/virl:topology/virl:node[4]/virl:interface[1]" src="/virl:topology/virl:node[7]/virl:interface[2]"/>
+    <connection dst="/virl:topology/virl:node[8]/virl:interface[1]" src="/virl:topology/virl:node[4]/virl:interface[2]"/>
+    <connection dst="/virl:topology/virl:node[6]/virl:interface[1]" src="/virl:topology/virl:node[8]/virl:interface[2]"/>
+    <connection dst="/virl:topology/virl:node[4]/virl:interface[3]" src="/virl:topology/virl:node[6]/virl:interface[2]"/>
+    <connection dst="/virl:topology/virl:node[3]/virl:interface[4]" src="/virl:topology/virl:node[4]/virl:interface[4]"/>
+    <connection dst="/virl:topology/virl:node[6]/virl:interface[3]" src="/virl:topology/virl:node[5]/virl:interface[3]"/>
+    <connection dst="/virl:topology/virl:node[1]/virl:interface[3]" src="/virl:topology/virl:node[9]/virl:interface[1]"/>
+    <connection dst="/virl:topology/virl:node[8]/virl:interface[3]" src="/virl:topology/virl:node[10]/virl:interface[1]"/>
+</topology>
